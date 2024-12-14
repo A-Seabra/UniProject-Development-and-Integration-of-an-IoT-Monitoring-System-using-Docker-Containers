@@ -1,0 +1,133 @@
+version: "3.8"
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: mosquitto
+    restart: always
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+    ports:
+      - "1883:1883"
+    
+
+
+  python-script:
+    build: .  # Build the context from the current directory (.)
+    container_name: pub1
+    restart: always
+    depends_on:
+      - mosquitto  # This service depends on the mosquitto service being up first
+    command: ["python", "tp2_data_publisher_base.py"]  # Replace with the actual script name
+    environment:
+      Broker: mosquitto  # Set the broker hostname as an environment variable
+      Rate: 2
+      Topic: sensor_data
+      Sensor: sensor_1
+    
+
+  python-script2:
+    build: .  # Build the context from the current directory (.)
+    container_name: pub2
+    restart: always
+    depends_on:
+      - mosquitto  # This service depends on the mosquitto service being up first
+    command: ["python", "tp2_data_publisher_base.py"]  # Replace with the actual script name
+    environment:
+      Broker: mosquitto  # Set the broker hostname as an environment variable
+      Rate: 2
+      Topic: sensor_data
+      Sensor: sensor_2
+
+  python-script3:
+    build: .  # Build the context from the current directory (.)
+    container_name: pub3
+    restart: always
+    depends_on:
+      - mosquitto  # This service depends on the mosquitto service being up first
+    command: ["python", "tp2_data_publisher_base.py"]  # Replace with the actual script name
+    environment:
+      Broker: mosquitto  # Set the broker hostname as an environment variable
+      Rate: 2
+      Topic: sensor_data
+      Sensor: sensor_3
+
+
+  node-red:
+    image: nodered/node-red:latest
+    container_name: node-red
+    restart: always
+    depends_on:
+      - mosquitto  # This service depends on the mosquitto service being up first
+    environment:
+      - TZ=Europe/Amsterdam
+    ports:
+      - "1880:1880"
+    volumes:
+      - node-red-data:/data
+  
+  mongo:
+    image: mongo
+    container_name: mongo
+    restart: always
+    depends_on:
+      - node-red
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: user
+      MONGO_INITDB_ROOT_PASSWORD: pass
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodata:/data/db
+
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express
+    restart: always
+    depends_on:
+      - mongo
+    ports: 
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: user
+      ME_CONFIG_MONGODB_ADMINPASSWORD: pass
+      ME_CONFIG_MONGODB_URL: mongodb://user:pass@mongo:27017/ 
+        #The environment variable is used to specify the connection URL for MongoDB within the MongoDB Express container. 
+        #This URL tells MongoDB Express how to connect to the MongoDB instance.
+      ME_CONFIG_BASICAUTH: false
+    
+
+  influxdb:
+    image: influxdb
+    container_name: influxdb
+    restart: always
+    depends_on:
+      - node-red
+    ports:
+      - 8086:8086  
+    volumes:
+      - influxdb_data:/var/lib/influxdb2  # Mount volume for persistent data
+
+
+
+  grafana:
+    image: grafana/grafana-enterprise
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+     - GF_SERVER_ROOT_URL=http://my.grafana.server/
+     - GF_INSTALL_PLUGINS=grafana-clock-panel
+    ports:
+     - '3000:3000'
+    volumes:
+     - 'grafana_storage:/var/lib/grafana'
+
+
+volumes:
+  node-red-data:
+  grafana_storage: {}
+  influxdb_data:
+  mongodata:
+    driver: local
+    

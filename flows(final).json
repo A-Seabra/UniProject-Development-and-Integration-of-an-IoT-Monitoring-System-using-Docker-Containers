@@ -1,0 +1,521 @@
+[
+    {
+        "id": "1bb4ab2f229a4e4b",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "0a28e29e1d2f02cd",
+        "type": "comment",
+        "z": "1bb4ab2f229a4e4b",
+        "name": "WARNING: please check you have started this container with a volume that is mounted to /data\\n otherwise any flow changes are lost when you redeploy or upgrade the container\\n (e.g. upgrade to a more recent node-red docker image).\\n  If you are using named volumes you can ignore this warning.\\n Double click or see info side panel to learn how to start Node-RED in Docker to save your work",
+        "info": "\nTo start docker with a bind mount volume (-v option), for example:\n\n```\ndocker run -it -p 1880:1880 -v /home/user/node_red_data:/data --name mynodered nodered/node-red\n```\n\nwhere `/home/user/node_red_data` is a directory on your host machine where you want to store your flows.\n\nIf you do not do this then you can experiment and redploy flows, but if you restart or upgrade the container the flows will be disconnected and lost. \n\nThey will still exist in a hidden data volume, which can be recovered using standard docker techniques, but that is much more complex than just starting with a named volume as described above.",
+        "x": 350,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "19e0a946f87d4706",
+        "type": "mqtt in",
+        "z": "1bb4ab2f229a4e4b",
+        "name": "",
+        "topic": "sensor_data",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "bbdc928039e3b5e7",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 110,
+        "y": 320,
+        "wires": [
+            [
+                "a5179801d553907c",
+                "8d566beed0497177"
+            ]
+        ]
+    },
+    {
+        "id": "a5179801d553907c",
+        "type": "debug",
+        "z": "1bb4ab2f229a4e4b",
+        "name": "debug 1",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 280,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "ecb1fe625df88966",
+        "type": "mongodb4",
+        "z": "1bb4ab2f229a4e4b",
+        "clientNode": "b4d3ba2baf4b0f88",
+        "mode": "collection",
+        "collection": "",
+        "operation": "insertOne",
+        "output": "toArray",
+        "maxTimeMS": "0",
+        "handleDocId": false,
+        "name": "",
+        "x": 620,
+        "y": 400,
+        "wires": [
+            [
+                "90e0add1493109cc"
+            ]
+        ]
+    },
+    {
+        "id": "90e0add1493109cc",
+        "type": "debug",
+        "z": "1bb4ab2f229a4e4b",
+        "name": "debug 2",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 760,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "8d566beed0497177",
+        "type": "function",
+        "z": "1bb4ab2f229a4e4b",
+        "name": "function 1",
+        "func": "// Retrieve the value passed as a parameter\nvar inputValue = msg.payload;\n\n// Split the input value by \": \" to separate sensor name and value\nvar parts = inputValue.split(\": \");\n\nmsg.payload = parts[1]\nmsg.topic = parts[0]\n\n// Check if it's an empty string before splitting\nif (parts[1] === \"null\") {\n  // Handle empty payload case (optional)\n  msg.payload = null;\n  return msg;\n}\n\nreturn msg\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 280,
+        "y": 320,
+        "wires": [
+            [
+                "453c7e18d6f5e5eb",
+                "d38c716ee123326f",
+                "36eaf35abffc173e",
+                "92d1285c60a9976f",
+                "28c537b9895c5c5b"
+            ]
+        ]
+    },
+    {
+        "id": "92d1285c60a9976f",
+        "type": "ui_text",
+        "z": "1bb4ab2f229a4e4b",
+        "group": "4b1f008cf6ea03f1",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "LATEST VALUE: {{msg.topic}}",
+        "format": "{{msg.payload}}",
+        "layout": "row-left",
+        "className": "",
+        "style": true,
+        "font": "Times New Roman,Times,serif",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 470,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "4af52d36802adb7e",
+        "type": "ui_toast",
+        "z": "1bb4ab2f229a4e4b",
+        "position": "top right",
+        "displayTime": "3",
+        "highlight": "red",
+        "sendall": true,
+        "outputs": 0,
+        "ok": "OK",
+        "cancel": "",
+        "raw": false,
+        "className": "",
+        "topic": "Extreme value!",
+        "name": "Extreme value!",
+        "x": 860,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "18b6d11152f15e0b",
+        "type": "switch",
+        "z": "1bb4ab2f229a4e4b",
+        "name": "ExtremeCheck",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "lt",
+                "v": "70",
+                "vt": "str"
+            },
+            {
+                "t": "gt",
+                "v": "110",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 660,
+        "y": 220,
+        "wires": [
+            [
+                "4af52d36802adb7e"
+            ],
+            [
+                "4af52d36802adb7e"
+            ]
+        ]
+    },
+    {
+        "id": "453c7e18d6f5e5eb",
+        "type": "switch",
+        "z": "1bb4ab2f229a4e4b",
+        "name": "RemoveAnomalies",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "nnull"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 510,
+        "y": 320,
+        "wires": [
+            [
+                "888f25f057c1b74c",
+                "e8f9cc1617c9035d",
+                "924d1e76a029a38a"
+            ]
+        ]
+    },
+    {
+        "id": "4f2718162a7267c0",
+        "type": "ui_toast",
+        "z": "1bb4ab2f229a4e4b",
+        "position": "top left",
+        "displayTime": "3",
+        "highlight": "purple",
+        "sendall": true,
+        "outputs": 0,
+        "ok": "OK",
+        "cancel": "",
+        "raw": false,
+        "className": "",
+        "topic": "Anomaly value!",
+        "name": "Anomaly!",
+        "x": 640,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "d38c716ee123326f",
+        "type": "function",
+        "z": "1bb4ab2f229a4e4b",
+        "name": "function 2",
+        "func": "\n// Retrieve the value passed as a parameter\nvar inputValue = msg.payload;\nvar DBCollection = msg.topic;\n// Create the message object with the desired format\nvar outputMsg = {\n    payload: {\n        value: inputValue\n    },\n    collection:DBCollection,\n};\n\n// Send the message to the next node\nreturn outputMsg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 480,
+        "y": 400,
+        "wires": [
+            [
+                "ecb1fe625df88966"
+            ]
+        ]
+    },
+    {
+        "id": "36eaf35abffc173e",
+        "type": "debug",
+        "z": "1bb4ab2f229a4e4b",
+        "name": "debug 4",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 480,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "888f25f057c1b74c",
+        "type": "debug",
+        "z": "1bb4ab2f229a4e4b",
+        "name": "debug 5",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 700,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "e8f9cc1617c9035d",
+        "type": "ui_chart",
+        "z": "1bb4ab2f229a4e4b",
+        "name": "",
+        "group": "4b1f008cf6ea03f1",
+        "order": 0,
+        "width": "0",
+        "height": "0",
+        "label": "Data chart",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "dd HH:mm",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": true,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 710,
+        "y": 360,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "5202a1834409db9a",
+        "type": "influxdb out",
+        "z": "1bb4ab2f229a4e4b",
+        "influxdb": "eeb221fb.ab27f",
+        "name": "",
+        "measurement": "value",
+        "precision": "",
+        "retentionPolicy": "",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "FCT",
+        "bucket": "bucket2",
+        "x": 900,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "924d1e76a029a38a",
+        "type": "function",
+        "z": "1bb4ab2f229a4e4b",
+        "name": "function 3",
+        "func": "// Retrieve the value passed as a parameter\nvar inputValue = parseFloat(msg.payload); // Parse inputValue as a float\nvar DBCollection = msg.topic;\n\n// Create the message object with the desired format\nvar outputMsg = {\n    payload: inputValue,\n    measurement: DBCollection,\n};\n\n// Send the message to the next node\nreturn outputMsg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 700,
+        "y": 320,
+        "wires": [
+            [
+                "5202a1834409db9a",
+                "249df91c8099b904"
+            ]
+        ]
+    },
+    {
+        "id": "249df91c8099b904",
+        "type": "debug",
+        "z": "1bb4ab2f229a4e4b",
+        "name": "debug 6",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 860,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "28c537b9895c5c5b",
+        "type": "switch",
+        "z": "1bb4ab2f229a4e4b",
+        "name": "NullCheck",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "null"
+            },
+            {
+                "t": "nnull"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 490,
+        "y": 200,
+        "wires": [
+            [
+                "4f2718162a7267c0"
+            ],
+            [
+                "18b6d11152f15e0b"
+            ]
+        ]
+    },
+    {
+        "id": "bbdc928039e3b5e7",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "mosquitto",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "b4d3ba2baf4b0f88",
+        "type": "mongodb4-client",
+        "name": "",
+        "protocol": "mongodb",
+        "hostname": "mongo",
+        "port": "27017",
+        "dbName": "sensorData",
+        "appName": "",
+        "authSource": "",
+        "authMechanism": "DEFAULT",
+        "tls": false,
+        "tlsCAFile": "",
+        "tlsCertificateKeyFile": "",
+        "tlsInsecure": false,
+        "connectTimeoutMS": "30000",
+        "socketTimeoutMS": "0",
+        "minPoolSize": "0",
+        "maxPoolSize": "100",
+        "maxIdleTimeMS": "0",
+        "uri": "",
+        "advanced": "{}",
+        "uriTabActive": "tab-uri-simple"
+    },
+    {
+        "id": "4b1f008cf6ea03f1",
+        "type": "ui_group",
+        "name": "Default",
+        "tab": "2f4e529d450c9ade",
+        "order": 1,
+        "disp": true,
+        "width": "20",
+        "collapse": false,
+        "className": "<i class=\"fa fa-home\" aria-hidden=\"true\"></i>"
+    },
+    {
+        "id": "eeb221fb.ab27f",
+        "type": "influxdb",
+        "hostname": "172.22.0.3",
+        "port": "8086",
+        "protocol": "http",
+        "database": "test",
+        "name": "InfluxDB",
+        "usetls": true,
+        "tls": "d50d0c9f.31e858",
+        "influxdbVersion": "2.0",
+        "url": "http://influxdb:8086",
+        "timeout": "",
+        "rejectUnauthorized": true
+    },
+    {
+        "id": "2f4e529d450c9ade",
+        "type": "ui_tab",
+        "name": "Home",
+        "icon": "fa-home",
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "d50d0c9f.31e858",
+        "type": "tls-config",
+        "name": "",
+        "cert": "",
+        "key": "",
+        "ca": "",
+        "certname": "",
+        "keyname": "",
+        "caname": "",
+        "servername": "",
+        "verifyservercert": false
+    }
+]

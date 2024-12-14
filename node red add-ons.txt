@@ -1,0 +1,3 @@
+node-red-contrib-influxdb
+node-red-contrib-mongodb4
+node-red-dashboard
